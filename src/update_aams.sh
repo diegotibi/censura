@@ -1,10 +1,10 @@
-#!/bin/sh -e
+#!/usr/bin/env sh
 
-. $(dirname "${0}")/censorship_params.sh
+. "$(dirname "${0}")/censorship_params.sh"
 
 LIST_URL="https://www1.adm.gov.it/files_siti_inibiti/elenco_siti_inibiti.txt"
 LIST_FILE="${TMP_DL_DIR}/blacklist_aams.txt"
-LIST_OUT="${UNBOUND_CONF_DIR}/db.blacklist_aams.conf"
+LIST_OUT="${CONF_DIR}/db.blacklist_aams.conf"
 LIST_TYPE="aams"
 BLACKHOLE="217.175.53.72"
 
@@ -30,3 +30,6 @@ ${WGET_BIN} ${WGET_OPTS} ${LIST_URL} -O ${LIST_FILE}
 
 ## parsing ###################################################################
 ${PARSER_BIN} ${PARSER_OPTS}
+
+## delete tmp junk ###########################################################
+rm "${LIST_FILE}"
