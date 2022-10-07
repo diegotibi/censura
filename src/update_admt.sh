@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 . "$(dirname "${0}")/censorship_params.sh"
 

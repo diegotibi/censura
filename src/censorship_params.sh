@@ -1,7 +1,6 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-ROOT_DIR="/root/censorship"
-#ROOT_DIR=$(pwd)
+ROOT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PARSER_BIN="${ROOT_DIR}/censor_parser.py"
 WGET_BIN=$(which wget)
 
@@ -11,5 +10,11 @@ OUTPUT_FORMAT="bind"  # Replace to "bind" or to "unbound"
 TMP_DL_DIR="${ROOT_DIR}/tmp"
 
 # Unbound params
-CONF_DIR="/etc/bind/zones"
-#CONF_DIR="${ROOT_DIR}/tmp"
+if [ "$OUTPUT_FORMAT" = "bind" ]
+then
+  CONF_DIR="/etc/bind/zones"
+  /usr/bin/systemctl reload bind9
+else
+  # shellcheck disable=SC2034
+  CONF_DIR="/usr/local/etc/unbound"
+fi
