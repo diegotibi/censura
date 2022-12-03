@@ -2,7 +2,7 @@
 
 . "$(dirname "${0}")/censorship_params.sh"
 
-LIST_URL="https://dns.mywic.it/download/censorship-list"
+LIST_URL="https://your.url/download/censorship-list"
 
 LIST_FILE="${TMP_DL_DIR}/blacklist_manual.txt"
 LIST_OUT="${CONF_DIR}/db.blacklist_manual.conf"

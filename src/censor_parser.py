@@ -12,81 +12,64 @@ in_format_list = ['cncpo', 'aams', 'admt', 'manuale']
 
 
 def write_unbound_list(outfile, blacklist, blackhole):
-    fp = open(outfile, 'w')
-    fp.write("server:\n")
-    for c in blacklist:
-        fp.write("local-zone: \"{}\" redirect \n".format(c))
-        fp.write("local-data: \"{} A {}\"\n".format(c, blackhole))
-    fp.close()
+    with open(outfile, 'w') as fp:
+        fp.write("server:\n")
+        for c in blacklist:
+            fp.write(f'local-zone: \"{c}\" redirect \n')
+            fp.write(f'local-data: \"{c} A {blackhole}\"\n')
     return
 
 
 def write_bind_data(outfile, blacklist, zonefile):
-    fp = open(outfile, 'w')
-    for c in blacklist:
-        fp.write('zone "{}" {{ type master; file "{}"; }};\n'.format(c, zonefile))
-    fp.close()
+    with open(outfile, 'w') as fp:
+        for c in blacklist:
+            fp.write('zone "{}" {{ type master; file "{}"; }};\n'.format(c, zonefile))
     return
 
 
 def parse_cncpo_list(infile):
-    black_list = list()
+    black_list = []
     i = 0
 
-    csv_file = open(infile)
-    spam_reader = csv.reader(csv_file, delimiter=';')
-    for row in spam_reader:
-        if i == 0:
-            i = 1
-            continue
-        if row is not None and len(row) > 0:
-            data = row[1].strip().lower()
-            if len(data) > 0:
-                black_list.append(data)
-    csv_file.close()
-    # Remove duplicates
-    clean_list = list(set(black_list))
-    return clean_list
+    with open(infile) as csv_file:
+        spam_reader = csv.reader(csv_file, delimiter=';')
+        for row in spam_reader:
+            if i == 0:
+                i = 1
+                continue
+            if row is not None and len(row) > 0:
+                data = row[1].strip().lower()
+                if len(data) > 0:
+                    black_list.append(data)
+    return list(set(black_list))
 
 
 def parse_list(infile):
-    black_list = list()
-    fp = open(infile)
-    line = fp.readline()
-    while line:
-        data = line.strip().lower()
-        if len(data) > 0:
-            black_list.append(data)
-        line = fp.readline()
-    fp.close()
-    # Remove duplicates
-    clean_list = list(set(black_list))
-    return clean_list
+    black_list = []
+    with open(infile) as fp:
+        while line := fp.readline():
+            data = line.strip().lower()
+            if len(data) > 0:
+                black_list.append(data)
+    return list(set(black_list))
 
 
 def filter_valid_domain(blacklist):
-    bl = list()
-    for current_list in blacklist:
-        if validators.domain(current_list):
-            bl.append(current_list)
-    return bl
+    return [current_list for current_list in blacklist if validators.domain(current_list)]
 
 
 def filter_whitelist(blacklist, whitelist):
     if blacklist is None or whitelist is None:
-        return list()
+        return []
     if (len(blacklist) == 0) or (len(whitelist) == 0):
         return blacklist
     bls = set(blacklist)
     wls = set(whitelist)
-    cls = list(bls - wls)
-    return cls
+    return list(bls - wls)
 
 
 def main():
     global options
-    wl = list()
-
     # Elaborazione argomenti della linea di comando
     usage = "usage: %prog [options] arg"
     parser = optparse.OptionParser(usage)
@@ -105,29 +88,24 @@ def main():
         parser.error("Numero di argomenti non corretto")
     if (options.in_file is None) or (options.out_file is None):
         parser.error("Numero di argomenti non corretto")
-    if (options.out_format is None) or not (options.out_format in out_format_list):
+    if options.out_format is None or options.out_format not in out_format_list:
         parser.error("Formato di output errato")
-    if (options.in_format is None) or not (options.in_format in in_format_list):
+    if options.in_format is None or options.in_format not in in_format_list:
         parser.error("Formato di input errato")
     if options.verbose:
-        print("File di input       : {}".format(options.in_file))
-        print("File di output      : {}".format(options.out_dir))
-        print("Formato             : {}".format(options.out_format))
+        print(f"File di input       : {options.in_file}")
+        print(f"File di output      : {options.out_dir}")
+        print(f"Formato             : {options.out_format}")
     #
     if options.blackhole is None:
         options.blackhole = default_blackhole
     if options.bind_zonefile is None:
         options.bind_zonefile = default_bind_block_zonefile
-    if options.wl_file is not None:
-        wl = parse_list(options.wl_file)
+    wl = parse_list(options.wl_file) if options.wl_file is not None else []
     #
     if options.in_format == 'cncpo':
         dns_bl = parse_cncpo_list(options.in_file)
-    elif options.in_format == 'aams':
-        dns_bl = parse_list(options.in_file)
-    elif options.in_format == 'admt':
-        dns_bl = parse_list(options.in_file)
-    elif options.in_format == 'manuale':
+    elif options.in_format in ['aams', 'admt', 'manuale']:
         dns_bl = parse_list(options.in_file)
     else:
         print("Formato di input non risconosciuto")
